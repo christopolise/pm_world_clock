@@ -1,21 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
-import 'package:intl/intl.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
+String waqiAPIKey = "510c278e7faabc1d3b7624d63860cad35acab3f1";
+
+Future<CityPM> fetchAQI() async {
+  final response = await http
+      .get(Uri.https('api.waqi.info', 'feed/elefsina/', {"token": waqiAPIKey}));
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    return CityPM.fromJson(jsonDecode(response.body));
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to load album');
+  }
+}
 
 class CityPM {
-  final String time;
-  final String aqi;
+  final int aqi;
   final String cityName;
 
-  CityPM({this.time, this.aqi, this.cityName});
+  CityPM({@required this.aqi, @required this.cityName});
 
-  Map<String, dynamic> toMap() {
-    return {
-      'time': time,
-      'aqi': aqi,
-      'cityName': cityName,
-    };
+  // Map<String, dynamic> toMap() {
+  //   return {
+  //     'aqi': aqi,
+  //     'cityName': cityName,
+  //   };
+  // }
+
+  factory CityPM.fromJson(Map<String, dynamic> json) {
+    return CityPM(
+      aqi: json['data']['aqi'],
+      cityName: json['data']['city']['name'],
+    );
   }
 }
 
@@ -42,7 +65,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(title: 'World Air Quality Index'),
+      home: MyHomePage(title: 'NET Lab - World Air Quality Index'),
     );
   }
 }
@@ -66,25 +89,60 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _timeString;
+  String _qualityString;
+  Future<CityPM> myCity;
+  String cityName = "";
+  int aqiVal = -1;
 
   @override
   void initState() {
-    _timeString = _formatDateTime(DateTime.now());
-    Timer.periodic(Duration(seconds: 1), (Timer t) => _getTime());
+    _qualityString = "";
+
+    myCity = fetchAQI();
+
+    Timer.periodic(Duration(milliseconds: 250), (Timer t) {
+      myCity.then((value) {
+        aqiVal = value.aqi;
+        cityName = value.cityName;
+        _getAirType(value.aqi);
+      });
+    });
+
     super.initState();
   }
 
-  void _getTime() {
-    final DateTime now = DateTime.now();
-    final String formattedDateTime = _formatDateTime(now);
+  void _getAirType(int aqiVal) {
+    String status;
+
+    if (aqiVal >= 0 && aqiVal <= 50) {
+      status = "Good";
+    } else if (aqiVal >= 51 && aqiVal <= 100) {
+      status = "Moderate";
+    } else if (aqiVal >= 101 && aqiVal <= 150) {
+      status = "High";
+    } else if (aqiVal >= 151 && aqiVal <= 200) {
+      status = "Unhealthy";
+    } else if (aqiVal >= 201 && aqiVal <= 300) {
+      status = "Very Unhealthy";
+    } else if (aqiVal >= 301) {
+      status = "Hazardous";
+    } else {
+      status = "ERROR";
+    }
+
     setState(() {
-      _timeString = formattedDateTime;
+      _qualityString = status;
     });
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return DateFormat.jm().format(dateTime);
+  Color _getTileColor(int aqiVal) {
+    if (aqiVal >= 0 && aqiVal <= 50) return Colors.green;
+    if (aqiVal >= 51 && aqiVal <= 100) return Colors.amber;
+    if (aqiVal >= 101 && aqiVal <= 150) return Colors.orange;
+    if (aqiVal >= 151 && aqiVal <= 200) return Colors.red;
+    if (aqiVal >= 201 && aqiVal <= 300) return Colors.purple;
+    if (aqiVal > 301) return Color.fromRGBO(128, 0, 0, 1);
+    return Colors.white;
   }
 
   @override
@@ -96,23 +154,42 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      floatingActionButton: Stack(children: [
-        QrImage(data: "1234567890", version: QrVersions.auto, size: 200),
-        Text("Add your own!")
-      ]),
+      backgroundColor: Colors.black87,
+      floatingActionButton: Container(
+          color: Color.fromARGB(200, 255, 255, 255),
+          child: Stack(children: [
+            Padding(
+                padding: EdgeInsets.fromLTRB(70, 15, 0, 20),
+                child: Text("Add your own!",
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold))),
+            Padding(
+                padding: EdgeInsets.all(35),
+                child: QrImage(
+                    data: "1234567890", version: QrVersions.auto, size: 200))
+          ])),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        toolbarHeight: 110,
+        backgroundColor: Colors.white30,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+        title: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
           Image.asset(
             'NET_Lab_Logo_v4.png',
-            scale: 4.25,
+            scale: 6,
           ),
-          Text(
-            widget.title,
-            style: TextStyle(color: Colors.black),
-          )
+          Padding(
+              padding: EdgeInsets.fromLTRB(50, 0, 0, 0),
+              child: Text(
+                widget.title,
+                style: TextStyle(color: Colors.white, fontSize: 45),
+              )),
+          Padding(
+              padding: EdgeInsets.fromLTRB(900, 0, 0, 0),
+              child: Text(
+                "powered by EPA",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ))
         ]),
       ),
       body: Center(
@@ -121,17 +198,33 @@ class _MyHomePageState extends State<MyHomePage> {
         child: GridView.builder(
             primary: false,
             padding: const EdgeInsets.all(20),
-            itemCount: 7,
+            itemCount: 1,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
+                crossAxisCount: 4, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
             itemBuilder: (context, index) {
               return GridTile(
-                  header: Text("Test bananas"),
-                  footer: Text(_timeString),
+                  header: Container(
+                      padding: EdgeInsets.fromLTRB(0, 25, 0, 0),
+                      alignment: Alignment.center,
+                      child: Text(
+                        cityName + " AQI",
+                        style: TextStyle(fontSize: 25, color: Colors.white),
+                      )),
+                  footer: Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.fromLTRB(0, 0, 0, 25),
+                      child: Text(
+                        _qualityString,
+                        style: TextStyle(fontSize: 50, color: Colors.white),
+                      )),
                   child: Container(
+                    alignment: Alignment.center,
                     padding: const EdgeInsets.all(8),
-                    child: const Text("He'd have you all unravel at the"),
-                    color: Colors.teal[100],
+                    child: Text(
+                      aqiVal.toString(),
+                      style: TextStyle(fontSize: 200, color: Colors.white),
+                    ),
+                    color: _getTileColor(aqiVal),
                   ));
             }),
       ),

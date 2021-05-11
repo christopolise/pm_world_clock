@@ -6,33 +6,18 @@ import 'package:http/http.dart' as http;
 
 String waqiAPIKey = "510c278e7faabc1d3b7624d63860cad35acab3f1";
 
-Future<CityPM> fetchAQI() async {
-  final response = await http
-      .get(Uri.https('api.waqi.info', 'feed/elefsina/', {"token": waqiAPIKey}));
-
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    return CityPM.fromJson(jsonDecode(response.body));
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to load album');
-  }
-}
-
 class CityPM {
   final int aqi;
   final String cityName;
 
   CityPM({@required this.aqi, @required this.cityName});
 
-  // Map<String, dynamic> toMap() {
-  //   return {
-  //     'aqi': aqi,
-  //     'cityName': cityName,
-  //   };
-  // }
+  Map<String, dynamic> toMap() {
+    return {
+      'aqi': aqi,
+      'cityName': cityName,
+    };
+  }
 
   factory CityPM.fromJson(Map<String, dynamic> json) {
     return CityPM(
@@ -89,29 +74,49 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String _qualityString;
-  Future<CityPM> myCity;
-  String cityName = "";
-  int aqiVal = -1;
+  Future<List<CityPM>> myCity;
+  List<String> places = [
+    "athens",
+    "provo",
+    "ulaanbaatar",
+    "moscow",
+    "paris",
+    "thessaloniki",
+    "shanghai",
+    "russia",
+    "berlin",
+    "mexico",
+    "johannesburg",
+    "guangzhou",
+    "brazil",
+    "chad",
+    "kazakhstan"
+  ];
 
-  @override
-  void initState() {
-    _qualityString = "";
+  Future<List<CityPM>> fetchAQI(List<String> locations) async {
+    List<CityPM> cityList = <CityPM>[];
 
-    myCity = fetchAQI();
+    for (int i = 0; i < locations.length; i++) {
+      final response = await http.get(Uri.https(
+          'api.waqi.info', 'feed/${locations[i]}/', {"token": waqiAPIKey}));
 
-    Timer.periodic(Duration(milliseconds: 250), (Timer t) {
-      myCity.then((value) {
-        aqiVal = value.aqi;
-        cityName = value.cityName;
-        _getAirType(value.aqi);
-      });
-    });
+      if (jsonDecode(response.body)["status"] == "error") {
+        cityList.add(CityPM(aqi: 999, cityName: "ERR - ${locations[i]}"));
+      } else if (response.statusCode == 200) {
+        // If the server did return a 200 OK response,
+        // then parse the JSON.
+        cityList.add(CityPM.fromJson(jsonDecode(response.body)));
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load album');
+      }
+    }
 
-    super.initState();
+    return cityList;
   }
 
-  void _getAirType(int aqiVal) {
+  String _getAirType(int aqiVal) {
     String status;
 
     if (aqiVal >= 0 && aqiVal <= 50) {
@@ -130,9 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
       status = "ERROR";
     }
 
-    setState(() {
-      _qualityString = status;
-    });
+    return status;
   }
 
   Color _getTileColor(int aqiVal) {
@@ -166,7 +169,9 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
                 padding: EdgeInsets.all(35),
                 child: QrImage(
-                    data: "1234567890", version: QrVersions.auto, size: 200))
+                    data: "Under Construction. Coming Soon!",
+                    version: QrVersions.auto,
+                    size: 200))
           ])),
       appBar: AppBar(
         toolbarHeight: 110,
@@ -192,42 +197,80 @@ class _MyHomePageState extends State<MyHomePage> {
               ))
         ]),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: GridView.builder(
-            primary: false,
-            padding: const EdgeInsets.all(20),
-            itemCount: 1,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4, crossAxisSpacing: 4.0, mainAxisSpacing: 4.0),
-            itemBuilder: (context, index) {
-              return GridTile(
-                  header: Container(
-                      padding: EdgeInsets.fromLTRB(0, 25, 0, 0),
-                      alignment: Alignment.center,
-                      child: Text(
-                        cityName + " AQI",
-                        style: TextStyle(fontSize: 25, color: Colors.white),
-                      )),
-                  footer: Container(
-                      alignment: Alignment.center,
-                      padding: EdgeInsets.fromLTRB(0, 0, 0, 25),
-                      child: Text(
-                        _qualityString,
-                        style: TextStyle(fontSize: 50, color: Colors.white),
-                      )),
-                  child: Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.all(8),
-                    child: Text(
-                      aqiVal.toString(),
-                      style: TextStyle(fontSize: 200, color: Colors.white),
-                    ),
-                    color: _getTileColor(aqiVal),
-                  ));
-            }),
-      ),
+      body: StreamBuilder(
+          stream: Stream.periodic(Duration(seconds: 2))
+              .asyncMap((event) => fetchAQI(places)),
+          builder: (context, snapshot) {
+            if (snapshot.data == ConnectionState.none) return Text("BANANA");
+            if (snapshot.connectionState == ConnectionState.active) {
+              return Center(
+                // Center is a layout widget. It takes a single child and positions it
+                // in the middle of the parent.
+                child: GridView.builder(
+                    primary: false,
+                    padding: const EdgeInsets.all(20),
+                    itemCount: snapshot.data.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 5,
+                        crossAxisSpacing: 4.0,
+                        mainAxisSpacing: 4.0),
+                    itemBuilder: (context, index) {
+                      var place = snapshot.data[index];
+                      return GridTile(
+                          header: Container(
+                              padding: EdgeInsets.fromLTRB(0, 25, 0, 0),
+                              alignment: Alignment.center,
+                              child: Text(
+                                place.cityName + " AQI",
+                                style: TextStyle(
+                                    fontSize: 25, color: Colors.white),
+                              )),
+                          footer: Container(
+                              alignment: Alignment.center,
+                              padding: EdgeInsets.fromLTRB(0, 0, 0, 25),
+                              child: Text(
+                                _getAirType(place.aqi),
+                                style: TextStyle(
+                                    fontSize: 50, color: Colors.white),
+                              )),
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.all(8),
+                            child: Text(
+                              place.aqi.toString(),
+                              style:
+                                  TextStyle(fontSize: 200, color: Colors.white),
+                            ),
+                            color: _getTileColor(place.aqi),
+                          ));
+                    }),
+              );
+            } else if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(
+                // Center is a layout widget. It takes a single child and positions it
+                // in the middle of the parent.
+                child: GridView.builder(
+                    primary: false,
+                    padding: const EdgeInsets.all(20),
+                    itemCount: 1,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 4.0,
+                        mainAxisSpacing: 4.0),
+                    itemBuilder: (context, index) {
+                      return GridTile(
+                          child: Container(
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.all(8),
+                        child: CircularProgressIndicator(),
+                        color: Colors.white30,
+                      ));
+                    }),
+              );
+            } else {
+              return null;
+            }
+          }),
     );
   }
 }

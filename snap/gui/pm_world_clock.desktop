@@ -1,0 +1,8 @@
+[Desktop Entry]
+  Name=PM World Clock
+  Comment=World Clock that shows different AQI ratings for locations across the globe
+  Exec=pm_world_clock 
+  Icon=${SNAP}/meta/gui/pm_world_clock.png # replace name to your app name
+  Terminal=false
+  Type=Application
+  Categories=Education; #adjust accordingly your snap category

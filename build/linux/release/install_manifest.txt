@@ -1,0 +1,13 @@
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/pm_world_clock
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/icudtl.dat
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/lib/libflutter_linux_gtk.so
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/fonts/MaterialIcons-Regular.otf
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/FontManifest.json
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/assets/NET_Lab_Logo_v4.png
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/assets/Schematic_7+Segment+array+display.pdf
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/assets/NanoV3.3_sch.pdf
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/NOTICES
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/AssetManifest.json
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/data/flutter_assets/version.json
+/home/kchristm/dev/pm_world_clock/build/linux/release/bundle/lib/libapp.so

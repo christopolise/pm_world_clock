@@ -3,6 +3,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:mqtt_client/mqtt_browser_client.dart';
+import 'package:mqtt_client/mqtt_client.dart';
 
 String waqiAPIKey = "510c278e7faabc1d3b7624d63860cad35acab3f1";
 
@@ -27,7 +29,110 @@ class CityPM {
   }
 }
 
+MqttBrowserClient client;
+MqttConnectionState connectionState;
+Future mqttFuture;
+String locationListStr = '';
+
+List<dynamic> coordinateList = <List<double>>[
+  [47.916638882615025, 106.9225416482629],
+  [40.24626993238064, -111.64780855178833]
+];
+
+onConnected() {
+  print("HOLY CRAP THIS CONNECTED");
+}
+
+onDisconnected() {
+  print("WTF IT DISCONNECTED");
+}
+
+onSubscribed(String sub) {
+  print("We are subscribed to $sub");
+}
+
+_getMqtt() async {
+  MqttBrowserClient client = await connect();
+  return client;
+}
+
+Future<List<CityPM>> fetchAQI(List<dynamic> locations) async {
+  mqttFuture.then((value) async =>
+      await value.subscribe('aq_display/location_list', MqttQos.exactlyOnce));
+
+  List<CityPM> cityList = <CityPM>[];
+
+  for (int i = 0; i < locations.length; i++) {
+    final response = await http.get(Uri.https(
+        'api.waqi.info',
+        'feed/geo:${locations[i][0]};${locations[i][1]}/',
+        {"token": waqiAPIKey}));
+
+    if (jsonDecode(response.body)["status"] == "error") {
+      print("ERROR");
+      cityList.add(CityPM(aqi: 999, cityName: "ERR - ${locations[i]}"));
+    } else if (response.statusCode == 200) {
+      cityList.add(CityPM.fromJson(jsonDecode(response.body)));
+    } else {
+      throw Exception('Failed to load album');
+    }
+  }
+
+  return cityList;
+}
+
+Future<MqttBrowserClient> connect() async {
+  MqttBrowserClient client = MqttBrowserClient(
+      'ws://mqtt.eclipseprojects.io/mqtt',
+      'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787');
+  client.port = 80;
+  client.logging(on: false);
+  client.onConnected = onConnected;
+  client.onDisconnected = onDisconnected;
+  // client.onUnsubscribed = onUnsubscribed;
+  client.onSubscribed = onSubscribed;
+  client.keepAlivePeriod = 60;
+  // client.onSubscribeFail = onSubscribeFail;
+  // client.pongCallback = pong;
+  // client.on
+
+  final connMessage = MqttConnectMessage()
+      .withClientIdentifier(
+          'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787')
+      // .authenticateAs('username', 'password')
+      .keepAliveFor(60)
+      // .withWillTopic('willtopic')
+      // .withWillMessage('Will message')
+      .startClean()
+      .withWillQos(MqttQos.exactlyOnce);
+  client.connectionMessage = connMessage;
+
+  try {
+    await client.connect();
+  } catch (e) {
+    print('Exception: $e');
+    client.disconnect();
+  }
+
+  client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
+    final MqttPublishMessage message = c[0].payload;
+
+    final payload =
+        MqttPublishPayload.bytesToStringAsString(message.payload.message);
+
+    locationListStr = payload;
+    var banana = jsonDecode(payload);
+    coordinateList.clear();
+    coordinateList = banana["locations"];
+
+    // print('Received message: $payload from topic: ${c[0].topic}>');
+  });
+
+  return client;
+}
+
 void main() {
+  mqttFuture = _getMqtt();
   runApp(MyApp());
 }
 
@@ -39,15 +144,6 @@ class MyApp extends StatelessWidget {
       title: 'NET Lab - World Air Quality Index',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage(title: 'NET Lab - World Air Quality Index'),
@@ -75,46 +171,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   Future<List<CityPM>> myCity;
-  List<String> places = [
-    "athens",
-    "provo",
-    "ulaanbaatar",
-    "moscow",
-    "paris",
-    "thessaloniki",
-    "shanghai",
-    "russia",
-    "berlin",
-    "mexico",
-    "johannesburg",
-    "guangzhou",
-    "brazil",
-    "chad",
-    "kazakhstan"
-  ];
-
-  Future<List<CityPM>> fetchAQI(List<String> locations) async {
-    List<CityPM> cityList = <CityPM>[];
-
-    for (int i = 0; i < locations.length; i++) {
-      final response = await http.get(Uri.https(
-          'api.waqi.info', 'feed/${locations[i]}/', {"token": waqiAPIKey}));
-
-      if (jsonDecode(response.body)["status"] == "error") {
-        cityList.add(CityPM(aqi: 999, cityName: "ERR - ${locations[i]}"));
-      } else if (response.statusCode == 200) {
-        // If the server did return a 200 OK response,
-        // then parse the JSON.
-        cityList.add(CityPM.fromJson(jsonDecode(response.body)));
-      } else {
-        // If the server did not return a 200 OK response,
-        // then throw an exception.
-        throw Exception('Failed to load album');
-      }
-    }
-
-    return cityList;
-  }
 
   String _getAirType(int aqiVal) {
     String status;
@@ -149,13 +205,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       backgroundColor: Colors.black87,
       floatingActionButton: Container(
@@ -169,7 +224,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
                 padding: EdgeInsets.all(35),
                 child: QrImage(
-                    data: "Under Construction. Coming Soon!",
+                    data: "https:kitras.dev",
                     version: QrVersions.auto,
                     size: 200))
           ])),
@@ -198,11 +253,17 @@ class _MyHomePageState extends State<MyHomePage> {
         ]),
       ),
       body: StreamBuilder(
-          stream: Stream.periodic(Duration(seconds: 2))
-              .asyncMap((event) => fetchAQI(places)),
+          stream: Stream.periodic(Duration(seconds: 5)).asyncMap((event) =>
+              // await mqttFuture.then((value) async => await value.subscribe(
+              //     'aq_display/location_list', MqttQos.atLeastOnce));
+              // print("Places: $locationListStr");
+              // print(jsonDecode(locationListStr)["locations"]);
+              fetchAQI(coordinateList)),
           builder: (context, snapshot) {
-            if (snapshot.data == ConnectionState.none) return Text("BANANA");
+            if (snapshot.connectionState == ConnectionState.none)
+              return Text("BANANA");
             if (snapshot.connectionState == ConnectionState.active) {
+              if (snapshot.data == null) return Scaffold();
               return Center(
                 // Center is a layout widget. It takes a single child and positions it
                 // in the middle of the parent.

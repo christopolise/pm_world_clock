@@ -45,6 +45,7 @@ onConnected() {
 
 onDisconnected() {
   print("WTF IT DISCONNECTED");
+  // mqttFuture = _getMqtt();
 }
 
 onSubscribed(String sub) {
@@ -89,6 +90,7 @@ Future<MqttBrowserClient> connect() async {
   client.logging(on: false);
   client.onConnected = onConnected;
   client.onDisconnected = onDisconnected;
+  client.autoReconnect = true;
   // client.onUnsubscribed = onUnsubscribed;
   client.onSubscribed = onSubscribed;
   client.keepAlivePeriod = 60;
@@ -210,6 +212,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void dispose() {
+    mqttFuture.then((value) => value.disconnect());
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
@@ -253,13 +261,14 @@ class _MyHomePageState extends State<MyHomePage> {
         ]),
       ),
       body: StreamBuilder(
-          stream: Stream.periodic(Duration(seconds: 5)).asyncMap((event) =>
+          stream: Stream.periodic(Duration(seconds: 10)).asyncMap((event) =>
               // await mqttFuture.then((value) async => await value.subscribe(
               //     'aq_display/location_list', MqttQos.atLeastOnce));
               // print("Places: $locationListStr");
               // print(jsonDecode(locationListStr)["locations"]);
               fetchAQI(coordinateList)),
           builder: (context, snapshot) {
+            print(snapshot.connectionState);
             if (snapshot.connectionState == ConnectionState.none)
               return Text("BANANA");
             if (snapshot.connectionState == ConnectionState.active) {

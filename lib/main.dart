@@ -45,7 +45,7 @@ onConnected() {
 
 onDisconnected() {
   print("WTF IT DISCONNECTED");
-  // mqttFuture = _getMqtt();
+  mqttFuture = _getMqtt();
 }
 
 onSubscribed(String sub) {
@@ -90,10 +90,11 @@ Future<MqttBrowserClient> connect() async {
   client.logging(on: false);
   client.onConnected = onConnected;
   client.onDisconnected = onDisconnected;
-  client.autoReconnect = true;
+  // client.autoReconnect = true;
   // client.onUnsubscribed = onUnsubscribed;
   client.onSubscribed = onSubscribed;
   client.keepAlivePeriod = 60;
+  client.resubscribeOnAutoReconnect = true;
   // client.onSubscribeFail = onSubscribeFail;
   // client.pongCallback = pong;
   // client.on
@@ -232,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
                 padding: EdgeInsets.all(35),
                 child: QrImage(
-                    data: "https:kitras.dev",
+                    data: "https://kitras.dev",
                     version: QrVersions.auto,
                     size: 200))
           ])),

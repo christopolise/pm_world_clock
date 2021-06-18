@@ -84,9 +84,9 @@ Future<List<CityPM>> fetchAQI(List<dynamic> locations) async {
 
 Future<MqttBrowserClient> connect() async {
   MqttBrowserClient client = MqttBrowserClient(
-      'ws://mqtt.eclipseprojects.io/mqtt',
+      'wss://mqtt.eclipseprojects.io/mqtt',
       'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787');
-  client.port = 80;
+  client.port = 443;
   client.logging(on: false);
   client.onConnected = onConnected;
   client.onDisconnected = onDisconnected;
@@ -233,7 +233,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
                 padding: EdgeInsets.all(35),
                 child: QrImage(
-                    data: "https://kitras.dev",
+                    data: "https://netlab.byu.edu/submit_pm/",
                     version: QrVersions.auto,
                     size: 200))
           ])),

@@ -291,7 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       var place = snapshot.data[index];
                       return GridTile(
                           header: Container(
-                            height: widget.,
+                              // height: widget.,
                               padding: EdgeInsets.fromLTRB(5, 25, 5, 0),
                               alignment: Alignment.center,
                               child: Text(
@@ -299,7 +299,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 style: TextStyle(
                                     fontSize: 25, color: Colors.white),
                                 textAlign: TextAlign.center,
-                                maxLines: 3,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               )),
                           footer: Container(

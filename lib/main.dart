@@ -291,6 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       var place = snapshot.data[index];
                       return GridTile(
                           header: Container(
+                            height: widget.,
                               padding: EdgeInsets.fromLTRB(5, 25, 5, 0),
                               alignment: Alignment.center,
                               child: Text(

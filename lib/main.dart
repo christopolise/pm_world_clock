@@ -238,28 +238,30 @@ class _MyHomePageState extends State<MyHomePage> {
                     size: 200))
           ])),
       appBar: AppBar(
-        toolbarHeight: 110,
+        toolbarHeight: MediaQuery.of(context).size.width / 15,
         backgroundColor: Colors.white30,
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
-          Image.asset(
-            'NET_Lab_Logo_v4.png',
-            scale: 6,
-          ),
-          Padding(
-              padding: EdgeInsets.fromLTRB(50, 0, 0, 0),
-              child: Text(
-                widget.title,
-                style: TextStyle(color: Colors.white, fontSize: 45),
-              )),
-          Padding(
-              padding: EdgeInsets.fromLTRB(900, 0, 0, 0),
-              child: Text(
-                "powered by EPA",
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ))
-        ]),
+        title: FittedBox(
+            fit: BoxFit.fitWidth,
+            child: Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+              Image.asset(
+                'NET_Lab_Logo_v4.png',
+                scale: 6,
+              ),
+              Padding(
+                  padding: EdgeInsets.fromLTRB(50, 0, 0, 0),
+                  child: Text(
+                    widget.title,
+                    style: TextStyle(color: Colors.white, fontSize: 45),
+                  )),
+              Padding(
+                  padding: EdgeInsets.fromLTRB(900, 0, 0, 0),
+                  child: Text(
+                    "powered by EPA",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ))
+            ])),
       ),
       body: StreamBuilder(
           stream: Stream.periodic(Duration(seconds: 10)).asyncMap((event) =>
@@ -289,29 +291,36 @@ class _MyHomePageState extends State<MyHomePage> {
                       var place = snapshot.data[index];
                       return GridTile(
                           header: Container(
-                              padding: EdgeInsets.fromLTRB(0, 25, 0, 0),
+                              padding: EdgeInsets.fromLTRB(5, 25, 5, 0),
                               alignment: Alignment.center,
                               child: Text(
                                 place.cityName + " AQI",
                                 style: TextStyle(
                                     fontSize: 25, color: Colors.white),
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               )),
                           footer: Container(
                               alignment: Alignment.center,
-                              padding: EdgeInsets.fromLTRB(0, 0, 0, 25),
-                              child: Text(
-                                _getAirType(place.aqi),
-                                style: TextStyle(
-                                    fontSize: 50, color: Colors.white),
-                              )),
+                              padding: EdgeInsets.fromLTRB(5, 0, 5, 25),
+                              child: FittedBox(
+                                  fit: BoxFit.fitWidth,
+                                  child: Text(
+                                    _getAirType(place.aqi),
+                                    style: TextStyle(
+                                        fontSize: 50, color: Colors.white),
+                                  ))),
                           child: Container(
                             alignment: Alignment.center,
                             padding: const EdgeInsets.all(8),
-                            child: Text(
-                              place.aqi.toString(),
-                              style:
-                                  TextStyle(fontSize: 200, color: Colors.white),
-                            ),
+                            child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  place.aqi.toString(),
+                                  style: TextStyle(
+                                      fontSize: 200, color: Colors.white),
+                                )),
                             color: _getTileColor(place.aqi),
                           ));
                     }),

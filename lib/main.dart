@@ -3,10 +3,22 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:mqtt_client/mqtt_browser_client.dart';
-import 'package:mqtt_client/mqtt_client.dart';
 
 String waqiAPIKey = "510c278e7faabc1d3b7624d63860cad35acab3f1";
+
+class City {
+  final double lat;
+  final double long;
+
+  City({@required this.lat, @required this.long});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'lat': lat,
+      'long': long,
+    };
+  }
+}
 
 class CityPM {
   final int aqi;
@@ -29,8 +41,8 @@ class CityPM {
   }
 }
 
-MqttBrowserClient client;
-MqttConnectionState connectionState;
+// MqttBrowserClient client;
+// MqttConnectionState connectionState;
 Future mqttFuture;
 String locationListStr = '';
 
@@ -39,27 +51,27 @@ List<dynamic> coordinateList = <List<double>>[
   [40.24626993238064, -111.64780855178833]
 ];
 
-onConnected() {
-  print("HOLY CRAP THIS CONNECTED");
-}
+// onConnected() {
+//   print("HOLY CRAP THIS CONNECTED");
+// }
 
-onDisconnected() {
-  print("WTF IT DISCONNECTED");
-  mqttFuture = _getMqtt();
-}
+// onDisconnected() {
+//   print("WTF IT DISCONNECTED");
+//   mqttFuture = _getMqtt();
+// }
 
-onSubscribed(String sub) {
-  print("We are subscribed to $sub");
-}
+// onSubscribed(String sub) {
+//   print("We are subscribed to $sub");
+// }
 
-_getMqtt() async {
-  MqttBrowserClient client = await connect();
-  return client;
-}
+// _getMqtt() async {
+//   MqttBrowserClient client = await connect();
+//   return client;
+// }
 
 Future<List<CityPM>> fetchAQI(List<dynamic> locations) async {
-  mqttFuture.then((value) async =>
-      await value.subscribe('aq_display/location_list', MqttQos.exactlyOnce));
+  // mqttFuture.then((value) async =>
+  //     await value.subscribe('aq_display/location_list', MqttQos.exactlyOnce));
 
   List<CityPM> cityList = <CityPM>[];
 
@@ -82,60 +94,60 @@ Future<List<CityPM>> fetchAQI(List<dynamic> locations) async {
   return cityList;
 }
 
-Future<MqttBrowserClient> connect() async {
-  MqttBrowserClient client = MqttBrowserClient(
-      'wss://mqtt.eclipseprojects.io/mqtt',
-      'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787');
-  client.port = 443;
-  client.logging(on: false);
-  client.onConnected = onConnected;
-  client.onDisconnected = onDisconnected;
-  // client.autoReconnect = true;
-  // client.onUnsubscribed = onUnsubscribed;
-  client.onSubscribed = onSubscribed;
-  client.keepAlivePeriod = 60;
-  client.resubscribeOnAutoReconnect = true;
-  // client.onSubscribeFail = onSubscribeFail;
-  // client.pongCallback = pong;
-  // client.on
+// Future<MqttBrowserClient> connect() async {
+//   MqttBrowserClient client = MqttBrowserClient(
+//       'wss://mqtt.eclipseprojects.io/mqtt',
+//       'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787');
+//   client.port = 443;
+//   client.logging(on: false);
+//   client.onConnected = onConnected;
+//   client.onDisconnected = onDisconnected;
+//   // client.autoReconnect = true;
+//   // client.onUnsubscribed = onUnsubscribed;
+//   client.onSubscribed = onSubscribed;
+//   client.keepAlivePeriod = 60;
+//   client.resubscribeOnAutoReconnect = true;
+//   // client.onSubscribeFail = onSubscribeFail;
+//   // client.pongCallback = pong;
+//   // client.on
 
-  final connMessage = MqttConnectMessage()
-      .withClientIdentifier(
-          'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787')
-      // .authenticateAs('username', 'password')
-      .keepAliveFor(60)
-      // .withWillTopic('willtopic')
-      // .withWillMessage('Will message')
-      .startClean()
-      .withWillQos(MqttQos.exactlyOnce);
-  client.connectionMessage = connMessage;
+//   final connMessage = MqttConnectMessage()
+//       .withClientIdentifier(
+//           'hjkghjkghjdfh785467856785678578jghjhjkhkj968576543e65787')
+//       // .authenticateAs('username', 'password')
+//       .keepAliveFor(60)
+//       // .withWillTopic('willtopic')
+//       // .withWillMessage('Will message')
+//       .startClean()
+//       .withWillQos(MqttQos.exactlyOnce);
+//   client.connectionMessage = connMessage;
 
-  try {
-    await client.connect();
-  } catch (e) {
-    print('Exception: $e');
-    client.disconnect();
-  }
+//   try {
+//     await client.connect();
+//   } catch (e) {
+//     print('Exception: $e');
+//     client.disconnect();
+//   }
 
-  client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-    final MqttPublishMessage message = c[0].payload;
+//   client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
+//     final MqttPublishMessage message = c[0].payload;
 
-    final payload =
-        MqttPublishPayload.bytesToStringAsString(message.payload.message);
+//     final payload =
+//         MqttPublishPayload.bytesToStringAsString(message.payload.message);
 
-    locationListStr = payload;
-    var banana = jsonDecode(payload);
-    coordinateList.clear();
-    coordinateList = banana["locations"];
+//     locationListStr = payload;
+//     var banana = jsonDecode(payload);
+//     coordinateList.clear();
+//     coordinateList = banana["locations"];
 
-    // print('Received message: $payload from topic: ${c[0].topic}>');
-  });
+//     // print('Received message: $payload from topic: ${c[0].topic}>');
+//   });
 
-  return client;
-}
+//   return client;
+// }
 
 void main() {
-  mqttFuture = _getMqtt();
+  // mqttFuture = _getMqtt();
   runApp(MyApp());
 }
 
@@ -173,7 +185,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<List<CityPM>> myCity;
+  // Future<List<CityPM>> myCity;
+  List<City> cityList = new List();
 
   String _getAirType(int aqiVal) {
     String status;

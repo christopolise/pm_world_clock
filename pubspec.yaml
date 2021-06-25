@@ -24,11 +24,12 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  firebase_database: ^7.1.1
   http: null
   intl: null
   mqtt_client: ^9.2.0
   qr_flutter: ^4.0.0
+  idb_sqflite:
+  sqflite:
 
 dev_dependencies:
   flutter_test:

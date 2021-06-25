@@ -26,14 +26,14 @@ dependencies:
   cupertino_icons: ^1.0.2
   http: null
   intl: null
-  mqtt_client: ^9.2.0
   qr_flutter: ^4.0.0
-  idb_sqflite:
-  sqflite:
+  moor: 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  moor_generator: 
+  build_runner: 
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

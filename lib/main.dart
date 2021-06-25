@@ -186,7 +186,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   // Future<List<CityPM>> myCity;
-  List<City> cityList = new List();
+  List<City> cityList = <City>[];
 
   String _getAirType(int aqiVal) {
     String status;
